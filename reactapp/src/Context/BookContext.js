@@ -1,6 +1,6 @@
 import { createContext, useReducer } from "react";
 import BookReducer, { initialState } from "./BookReducer";
-import { getBooks_API } from "../ApiService/ApiService";
+import { addBook_API, getBooks_API } from "../ApiService/ApiService";
 
 export const BookContext = createContext();
 
@@ -8,18 +8,25 @@ const BookContextProvider = ({ children }) => {
   const [state, dispatch] = useReducer(BookReducer, initialState);
 
   const getBook = async () => {
-    dispatch({ type: "LOADING" });
 
+    dispatch({ type: "LOADING" });
     try {
       const books = await getBooks_API();
       dispatch({ type: "GET_BOOKS", payload: books });
     } catch (error) {
-      dispatch({ type: "ERROR", payload: error.message });
+      dispatch({ type: "ERROR", payload: error.error });
     }
   };
 
-  const addBook = (book) => {
-    dispatch({ type: "ADD_BOOK", payload: book });
+  const addBook = async(bookData) => {
+
+    dispatch({ type: "LOADING" });
+    try{
+      const book = await addBook_API(bookData);
+      dispatch({ type: "ADD_BOOK", payload: book });
+    }catch(error){
+      dispatch({ type: "ERROR", payload: error.error });
+    }
   };
 
   const updateBook = (book) => {

@@ -6,7 +6,7 @@ function ViewBook() {
 
   useEffect(() => {
     if(bookList.length === 0) getBook()
-  }), []
+  })
 
   return <div></div>;
 }
