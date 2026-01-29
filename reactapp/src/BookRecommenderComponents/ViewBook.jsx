@@ -1,11 +1,14 @@
-import React from 'react'
+import React, { useContext, useEffect } from "react";
+import { BookContext } from "../Context/BookContext";
 
 function ViewBook() {
-  return (
-    <div>
-      
-    </div>
-  )
+  const { bookList, loading, error, getBook } = useContext(BookContext);
+
+  useEffect(() => {
+    if(bookList.length === 0) getBook()
+  }), []
+
+  return <div></div>;
 }
 
-export default ViewBook
+export default ViewBook;

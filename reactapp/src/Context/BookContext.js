@@ -1,42 +1,50 @@
-import  {createContext, useReducer, useState} from 'react'
-import BookReducer, { initialState } from './BookReducer'
-import { getBooks_API } from '../apiConfig'
+import { createContext, useReducer } from "react";
+import BookReducer, { initialState } from "./BookReducer";
+import { getBooks_API } from "../ApiService/ApiService";
 
-export const BookContext = createContext()
+export const BookContext = createContext();
 
-const BookContextProvider = ({children}) => {
+const BookContextProvider = ({ children }) => {
+  const [state, dispatch] = useReducer(BookReducer, initialState);
 
-    const [state, dispatch] = useReducer(BookReducer, initialState)
+  const getBook = async () => {
+    dispatch({ type: "LOADING" });
 
-    const getBook = async() => {
-        const books = await getBooks_API()
-        dispatch({type:'GET_BOOKS', payload:books})
+    try {
+      const books = await getBooks_API();
+      dispatch({ type: "GET_BOOKS", payload: books });
+    } catch (error) {
+      dispatch({ type: "ERROR", payload: error.message });
     }
+  };
 
-    const addBook = (book) => {
-        dispatch ({type:'ADD_BOOKS', payload:book})
-    }
+  const addBook = (book) => {
+    dispatch({ type: "ADD_BOOK", payload: book });
+  };
 
-    const updateBook = (book) => {
-        dispatch({type:'UPDATE_BOOKS', payload:book})
-    }
+  const updateBook = (book) => {
+    dispatch({ type: "UPDATE_BOOK", payload: book });
+  };
 
-    const deleteBook = (id) => {
-        dispatch({type:'DELETE_BOOKS', payload:id})
-    }
+  const deleteBook = (id) => {
+    dispatch({ type: "DELETE_BOOK", payload: id });
+  };
 
-    return (
-        <BookContext.Provider 
-        value={{
-            bookList: state.bookList,
-            addBook,
-            getBook,
-            updateBook,
-            deleteBook
-        }}>
-            {children}
-        </BookContext.Provider>
-    )
-}
+  return (
+    <BookContext.Provider
+      value={{
+        bookList: state.bookList,
+        loading: state.loading,
+        error: state.error,
+        getBook,
+        addBook,
+        updateBook,
+        deleteBook,
+      }}
+    >
+      {children}
+    </BookContext.Provider>
+  );
+};
 
-export default BookContextProvider
+export default BookContextProvider;

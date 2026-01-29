@@ -1,11 +1,21 @@
-import React from 'react'
+import React from "react";
 
 function BookForm() {
-  return (
-    <div>
+
+  const validateForm = () => {
+    return true
+  }
+
+  const handleSubmit = (e) => {
+
+    e.preventDefault()
+    if(validateForm()){
       
-    </div>
-  )
+    }
+
+  };
+
+  return <div></div>;
 }
 
-export default BookForm
+export default BookForm;
