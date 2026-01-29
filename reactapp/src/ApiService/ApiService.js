@@ -1,25 +1,25 @@
-const BASE_URL = ""
+const BASE_URL = "";
 
-export const getBooks_API = async() => {
-    const res = await fetch(`${BASE_URL}/**`, {
-        method:"GET",
-        headers:{
-            "Authorization" : localStorage.getItem("token"),
-            "Content-Type" : "application/json"
-        }
-        
-    })
+const getToken = () => {
+  return localStorage.getItem("token") || null;
+};
 
-    if(!res.ok){
-        const errData = await res.json()
-        throw new Error(errData.message)
-    }
+export const getBooks_API = async () => {
+  const res = await fetch(`${BASE_URL}/**`, {
+    method: "GET",
+    headers: {
+      Authorization: getToken(),
+      "Content-Type": "application/json",
+    },
+  });
 
-    return await res.json()
+  if (!res.ok) {
+    const errData = await res.json();
+    throw new Error(errData.message);
+  }
 
-    
-}
-
+  return await res.json();
+};
 
 export const addBook_API = async (bookData) => {
   const formData = new FormData();
@@ -27,21 +27,28 @@ export const addBook_API = async (bookData) => {
   // Part 1: bookData as JSON
   formData.append(
     "bookData",
-    new Blob([JSON.stringify({
-      title: bookData.title,
-      author: bookData.author,
-      genre: bookData.genre,
-      publishedDate: bookData.publishedDate,
-    })], { type: "application/json" })
+    new Blob(
+      [
+        JSON.stringify({
+          title: bookData.title,
+          author: bookData.author,
+          genre: bookData.genre,
+          publishedDate: bookData.publishedDate,
+        }),
+      ],
+      { type: "application/json" },
+    ),
   );
 
   // Part 2: cover image file
-  formData.append("coverImage", bookData.coverImage);
+  if (bookData.coverImage) {
+    formData.append("coverImage", bookData.coverImage);
+  }
 
-  const response = await fetch(`${BASE_URL}/api/books`, {
+  const response = await fetch(`${BASE_URL}/**`, {
     method: "POST",
     headers: {
-      Authorization: localStorage.getItem("token"),
+      Authorization: getToken(),
     },
     body: formData,
   });
@@ -53,3 +60,61 @@ export const addBook_API = async (bookData) => {
 
   return await response.json();
 };
+
+export const getBookById_API = async (id) => {
+  const response = await fetch(`${BASE_URL}/books/${id}`, {
+    method: "GET",
+    headers: {
+      Authorization: getToken()
+    },
+  });
+
+  if (!response.ok) {
+    const errData = await response.json();
+    throw new Error(errData.message || "Failed to fetch book");
+  }
+
+  return await response.json();
+};
+
+
+export const updateBook_API = async (bookData) => {
+  const formData = new FormData();
+
+  // JSON part
+  formData.append(
+    "bookData",
+    new Blob(
+      [
+        JSON.stringify({
+          title: bookData.title,
+          author: bookData.author,
+          genre: bookData.genre,
+          publishedDate: bookData.publishedDate,
+        }),
+      ],
+      { type: "application/json" }
+    )
+  );
+
+  // Image part (optional)
+  if (bookData.coverImage) {
+    formData.append("coverImage", bookData.coverImage);
+  }
+
+  const response = await fetch(`${BASE_URL}/books/${bookData.id}`, {
+    method: "PUT",
+    headers: {
+      Authorization: getToken(),
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errData = await response.json();
+    throw new Error(errData.message || "Failed to update book");
+  }
+
+  return await response.json();
+};
+

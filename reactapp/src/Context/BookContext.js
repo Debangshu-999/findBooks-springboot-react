@@ -1,52 +1,111 @@
-import { createContext, useReducer } from "react";
-import BookReducer, { initialState } from "./BookReducer";
-import { addBook_API, getBooks_API } from "../ApiService/ApiService";
+import { createContext, useState } from "react";
+import {
+  getBooks_API,
+  addBook_API,
+  getBookById_API,
+  updateBook_API,
+  // updateBook_API,
+  // deleteBook_API,
+} from "../ApiService/ApiService";
 
 export const BookContext = createContext();
 
 const BookContextProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(BookReducer, initialState);
+  const [bookList, setBookList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const getBook = async () => {
+  // Get all books
+  const getBooks = async () => {
+    setLoading(true);
+    setError(null);
 
-    dispatch({ type: "LOADING" });
     try {
       const books = await getBooks_API();
-      dispatch({ type: "GET_BOOKS", payload: books });
-    } catch (error) {
-      dispatch({ type: "ERROR", payload: error.error });
+      setBookList(books);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const addBook = async(bookData) => {
+  // Add book (multipart)
+  const addBook = async (bookData) => {
+    setLoading(true);
+    setError(null);
 
-    dispatch({ type: "LOADING" });
-    try{
-      const book = await addBook_API(bookData);
-      dispatch({ type: "ADD_BOOK", payload: book });
-    }catch(error){
-      dispatch({ type: "ERROR", payload: error.error });
+    try {
+      const savedBook = await addBook_API(bookData);
+      setBookList((prev) => [...prev, savedBook]);
+      return savedBook
+    } catch (err) {
+      setError(err.message);
+      throw err
+    } finally {
+      setLoading(false);
     }
   };
 
-  const updateBook = (book) => {
-    dispatch({ type: "UPDATE_BOOK", payload: book });
+  // Update book
+  const updateBook = async (bookData) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const updatedBook = await updateBook_API(bookData);
+      setBookList((prev) =>
+        prev.map((b) => (b.id === updatedBook.id ? updatedBook : b))
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const deleteBook = (id) => {
-    dispatch({ type: "DELETE_BOOK", payload: id });
-  };
+  // Get Book by ID
+  const getBookById = async (id) => {
+  setLoading(true);
+  setError(null);
+
+  try {
+    const book = await getBookById_API(id);
+    return book;
+  } catch (err) {
+    setError(err.message);
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // Delete book
+  // const deleteBook = async (id) => {
+  //   setLoading(true);
+  //   setError(null);
+
+  //   try {
+  //     await deleteBook_API(id);
+  //     setBookList((prev) => prev.filter((b) => b.id !== id));
+  //   } catch (err) {
+  //     setError(err.message);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <BookContext.Provider
       value={{
-        bookList: state.bookList,
-        loading: state.loading,
-        error: state.error,
-        getBook,
+        bookList,
+        loading,
+        error,
+        getBooks,
         addBook,
         updateBook,
-        deleteBook,
+        getBookById,
+        // deleteBook,
       }}
     >
       {children}

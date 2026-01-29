@@ -1,9 +1,10 @@
 import { useState, useContext } from "react";
 import { BookContext } from "../Context/BookContext";
 import { useNavigate } from "react-router-dom";
+import Modal from "../Components/Modal";
 
-const BookForm = () => {
-  const { addBook, loading, error} = useContext(BookContext);
+const BookForm = ({ mode }) => {
+  const { addBook, loading, error } = useContext(BookContext);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -15,14 +16,19 @@ const BookForm = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [showModal, setShowModal] = useState(false);
+  const [modal, setModal] = useState({
+    type: "",
+    message: "",
+  });
 
-  // 🔹 Handle text/date inputs
+  // Handle text/date inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🔹 Handle image input
+  // Handle image input
   const handleImageChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -30,7 +36,7 @@ const BookForm = () => {
     }));
   };
 
-  // 🔹 Validation
+  // Validation
   const validateForm = () => {
     const newErrors = {};
 
@@ -50,30 +56,60 @@ const BookForm = () => {
       newErrors.genre = "Genre is required";
     }
 
-    if (!formData.coverImage) {
-      newErrors.coverImage = "Cover image is required";
-    }
+
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // 🔹 Submit
-  const handleSubmit = (e) => {
+
+   const handleSuccessConfirm = () => {
+      setShowModal(false);
+      navigate("/viewbook");
+    };
+
+    const handleErrorClose = () => {
+      setShowModal(false);
+    };
+
+  // Submit
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
-    addBook({
-      id: Date.now(),
-      title: formData.title,
-      author: formData.author,
-      publishedDate: formData.publishedDate,
-      genre: formData.genre,
-      coverImage: formData.coverImage,
-    });
+    try {
+      const savedBook = await addBook({
+        title: formData.title,
+        author: formData.author,
+        publishedDate: formData.publishedDate,
+        genre: formData.genre,
+        coverImage: formData.coverImage,
+      });
 
-    navigate("/viewbook");
+      setShowModal(true);
+      setModal({
+        type: "success",
+        message: "Book added successfully!",
+      });
+
+      setFormData({
+        title: "",
+        author: "",
+        publishedDate: "",
+        genre: "",
+        coverImage: null,
+      });
+      setErrors({});
+
+    } catch (err) {
+      setShowModal(true);
+      setModal({
+        type: "error",
+        message: err.message || "Failed to add book",
+      });
+    }
+
   };
 
   return (
@@ -85,7 +121,8 @@ const BookForm = () => {
       <h3>Create New Book</h3>
 
       <form onSubmit={handleSubmit} noValidate>
-        {/* Title */}
+        <p>{error && error}</p>
+
         <label>Title*</label>
         <input
           type="text"
@@ -96,7 +133,6 @@ const BookForm = () => {
         />
         {errors.title && <p className="error">{errors.title}</p>}
 
-        {/* Author */}
         <label>Author*</label>
         <input
           type="text"
@@ -107,7 +143,6 @@ const BookForm = () => {
         />
         {errors.author && <p className="error">{errors.author}</p>}
 
-        {/* Published Date */}
         <label>Published Date*</label>
         <input
           type="date"
@@ -120,7 +155,6 @@ const BookForm = () => {
           <p className="error">{errors.publishedDate}</p>
         )}
 
-        {/* Genre */}
         <label>Genre*</label>
         <input
           type="text"
@@ -131,24 +165,27 @@ const BookForm = () => {
         />
         {errors.genre && <p className="error">{errors.genre}</p>}
 
-        {/* Cover Image */}
         <label>Cover Image*</label>
         <input
           type="file"
           accept=".jpg,.jpeg,.png"
           onChange={handleImageChange}
         />
-        {errors.coverImage && (
-          <p className="error">{errors.coverImage}</p>
-        )}
 
-        {/* Submit */}
-        <button type="submit" className="btn-submit">
-          Add Book
+        <button type="submit" className="btn-submit" disabled={loading}>
+          {loading ? "Adding..." : "Add Book"}
         </button>
       </form>
+
+      {showModal && (
+        <Modal
+          type={modal.type}
+          message={modal.message}
+          onConfirm={handleSuccessConfirm}
+          onClose={handleErrorClose}
+        />
+      )}
     </div>
   );
 };
-
 export default BookForm;
